@@ -134,53 +134,38 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     ) {isSearch ->
-                        if (isSearch) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth(.7f)
-                                    .fillMaxHeight(.05f)
-                                    .border(
-                                        border = BorderStroke(1.dp, Color.LightGray),
-                                        shape = RoundedCornerShape(24.dp)
-                                    )
-                                    .clip(shape = RoundedCornerShape(24.dp))
-                                    .background(Color.LightGray)
-                                ,
-
-                                ) {
-                                SearchTextField(
-                                    modifier = Modifier.weight(1f).align(CenterVertically),
-                                    query = text,
-                                    focusRequester = focusRequester,
-                                    onQueryChange = {
-                                        text = it
-                                    },
-                                    onQueryDone = {
-                                        if (showTextField && text.isNotBlank() && text.isNotEmpty()) {
+                        SearchTextFieldWrapper(
+                            title = "text",
+                            query = text,
+                            isSearch = isSearch,
+                            focusRequester = focusRequester,
+                            onQueryChange = {
+                                text = it
+                            },
+                            onQueryDone = {
+                                if (showTextField && text.isNotBlank() && text.isNotEmpty()) {
                                             Toast.makeText(context, "search start", Toast.LENGTH_SHORT).show()
                                             text = ""
                                         }
                                         showTextField = showTextField.not()
-                                    }
-                                )
-                                IconButton(onClick = { text = "" }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Close Icon",
-                                    )
-                                }
+                            },
+                            onClose = {
+                                text = ""
                             }
-                        } else {
-                            Text(text = "text")
-                        }
+                        )
                     }
                 }
-
             })
 
     }
 }
+const val textFieldWidthWeight = 0.7f
+const val textFieldHeightWeight = 0.05f
 
+val textFieldCornerShape = 24.dp
+val textFieldBackgroundColor = Color.LightGray
+
+val textFieldPaddingStart = 10.dp
 @Composable
 private fun SearchTextField(
     modifier: Modifier = Modifier,
@@ -193,12 +178,52 @@ private fun SearchTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
-            .padding(start = 10.dp)
+            .padding(start = textFieldPaddingStart)
             .focusRequester(focusRequester = focusRequester),
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = onQueryDone)
     )
+}
+@Composable
+private fun SearchTextFieldWrapper(
+    title: String,
+    isSearch: Boolean,
+    query: String,
+    focusRequester: FocusRequester,
+    onQueryChange: (String) -> Unit,
+    onQueryDone: (KeyboardActionScope.() -> Unit)?,
+    onClose: () -> Unit,
+) {
+    if (isSearch) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(textFieldWidthWeight)
+                .fillMaxHeight(textFieldHeightWeight)
+                .border(
+                    border = BorderStroke(1.dp, textFieldBackgroundColor),
+                    shape = RoundedCornerShape(textFieldCornerShape)
+                )
+                .clip(shape = RoundedCornerShape(textFieldCornerShape))
+                .background(textFieldBackgroundColor)
+        ) {
+            SearchTextField(
+                modifier = Modifier.weight(1f).align(CenterVertically),
+                query = query,
+                focusRequester = focusRequester,
+                onQueryChange = onQueryChange,
+                onQueryDone = onQueryDone
+            )
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close Icon",
+                )
+            }
+        }
+    } else {
+        Text(text = title)
+    }
 }
 
 fun Modifier.addFocusCleaner(focusManager: FocusManager, doOnClear: () -> Unit = {}): Modifier {
