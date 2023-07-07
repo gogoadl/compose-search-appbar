@@ -43,8 +43,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +81,7 @@ fun SearchAppBar(
                 modifier = modifier,
                 targetState = targetState,
                 title = title,
+                placeholder = placeholder,
                 query = query,
                 focusRequester = focusRequester,
                 onQueryChange = onQueryChange,
@@ -104,6 +107,7 @@ val textFieldPaddingStart = 15.dp
 @Composable
 private fun SearchTextField(
     modifier: Modifier = Modifier,
+    placeholder: String,
     focusRequester: FocusRequester,
     onQueryChange: (String) -> Unit,
     onQueryDone: (KeyboardActionScope.() -> Unit)?,
@@ -117,13 +121,25 @@ private fun SearchTextField(
             .focusRequester(focusRequester = focusRequester),
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = onQueryDone)
+        keyboardActions = KeyboardActions(onDone = onQueryDone),
+        decorationBox = { innerTextField ->
+            if (query.isEmpty()) {
+                Text(
+                    text = placeholder,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.White
+                )
+            }
+            innerTextField()
+        }
     )
 }
 @Composable
 private fun SearchTextFieldWrapper(
     modifier: Modifier,
     title: String,
+    placeholder: String,
     isSearch: Boolean,
     query: String,
     focusRequester: FocusRequester,
@@ -149,6 +165,7 @@ private fun SearchTextFieldWrapper(
                     .weight(1f)
                     .align(Alignment.CenterVertically),
                 query = query,
+                placeholder = placeholder,
                 focusRequester = focusRequester,
                 onQueryChange = onQueryChange,
                 onQueryDone = onQueryDone
@@ -171,6 +188,7 @@ private fun SearchAppBarTitle(
     modifier: Modifier,
     targetState: Boolean,
     title: String,
+    placeholder: String,
     query: String,
     focusRequester: FocusRequester,
     onQueryChange: (String) -> Unit,
@@ -198,6 +216,7 @@ private fun SearchAppBarTitle(
             SearchTextFieldWrapper(
                 modifier = modifier,
                 title = title,
+                placeholder = placeholder,
                 query = query,
                 isSearch = isSearch,
                 focusRequester = focusRequester,
@@ -209,6 +228,8 @@ private fun SearchAppBarTitle(
         }
     }
 }
+
+// Reference : https://blog.yena.io/studynote/2022/04/30/Jetpack-Compose-TextField-Focus.html
 fun Modifier.addFocusCleaner(focusManager: FocusManager, doOnClear: () -> Unit = {}): Modifier {
     return this.pointerInput(Unit) {
         detectTapGestures(onTap = {
