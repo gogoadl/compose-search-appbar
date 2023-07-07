@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
                 Scaffold(topBar = {
                     SearchAppBar(
+                        modifier = Modifier,
                         title = title,
                         query = query,
                         placeholder = "search anything!",

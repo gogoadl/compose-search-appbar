@@ -59,7 +59,7 @@ fun SearchAppBar(
     onQueryDone: (KeyboardActionScope.() -> Unit)?,
     onClose: () -> Unit,
     backgroundColor: TopAppBarColors = TopAppBarDefaults.smallTopAppBarColors(),
-    textFieldColor: Color = textFieldBackgroundColor
+    textFieldColor: Color = textFieldBackgroundColor2
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester by remember { mutableStateOf(FocusRequester()) }
@@ -76,6 +76,7 @@ fun SearchAppBar(
         },
         title = {
             SearchAppBarTitle(
+                modifier = modifier,
                 targetState = targetState,
                 title = title,
                 query = query,
@@ -97,8 +98,8 @@ const val closeIconContentDescription = "Close Icon"
 
 val textFieldCornerShape = 24.dp
 val textFieldBackgroundColor = Color.LightGray
-
-val textFieldPaddingStart = 10.dp
+val textFieldBackgroundColor2 = Color(0xFFD5D5D5)
+val textFieldPaddingStart = 15.dp
 
 @Composable
 private fun SearchTextField(
@@ -121,6 +122,7 @@ private fun SearchTextField(
 }
 @Composable
 private fun SearchTextFieldWrapper(
+    modifier: Modifier,
     title: String,
     isSearch: Boolean,
     query: String,
@@ -132,7 +134,7 @@ private fun SearchTextFieldWrapper(
 ) {
     if (isSearch) {
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth(textFieldWidthWeight)
                 .fillMaxHeight(textFieldHeightWeight)
                 .border(
@@ -143,7 +145,7 @@ private fun SearchTextFieldWrapper(
                 .background(textFieldColor)
         ) {
             SearchTextField(
-                modifier = Modifier
+                modifier = modifier
                     .weight(1f)
                     .align(Alignment.CenterVertically),
                 query = query,
@@ -166,6 +168,7 @@ private fun SearchTextFieldWrapper(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun SearchAppBarTitle(
+    modifier: Modifier,
     targetState: Boolean,
     title: String,
     query: String,
@@ -193,6 +196,7 @@ private fun SearchAppBarTitle(
             }
         ) {isSearch ->
             SearchTextFieldWrapper(
+                modifier = modifier,
                 title = title,
                 query = query,
                 isSearch = isSearch,
