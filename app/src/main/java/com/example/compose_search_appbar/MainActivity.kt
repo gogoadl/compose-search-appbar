@@ -7,14 +7,18 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -97,18 +101,19 @@ class MainActivity : ComponentActivity() {
         val focusManager = LocalFocusManager.current
         val context = LocalContext.current
         val focusRequester by remember { mutableStateOf(FocusRequester()) }
-        var text by remember { mutableStateOf("") }
-        var showTextField by remember { mutableStateOf(false) }
+        val title = "title of your app"
+        var query by remember { mutableStateOf("") }
+        var targetState by remember { mutableStateOf(false) }
         TopAppBar(
             modifier = Modifier.addFocusCleaner(focusManager = focusManager),
             colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Blue),
             actions = {
                 IconButton(onClick = {
-                    if (showTextField && text.isNotBlank() && text.isNotEmpty()) {
+                    if (targetState && query.isNotBlank() && query.isNotEmpty()) {
                         Toast.makeText(context, "search start", Toast.LENGTH_SHORT).show()
-                        text = ""
+                        query = ""
                     }
-                    showTextField = showTextField.not()
+                    targetState = targetState.not()
                 }) {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -117,44 +122,25 @@ class MainActivity : ComponentActivity() {
                 }
             },
             title = {
-                Row() {
-                    AnimatedContent(
-                        targetState = showTextField,
-                        transitionSpec = {
-                            if ( targetState > initialState ){
-                                ContentTransform(
-                                    targetContentEnter = slideInHorizontally { height -> height } + fadeIn(),
-                                    initialContentExit = slideOutHorizontally { height -> -height } + fadeOut()
-                                )
-                            } else {
-                                ContentTransform(
-                                    targetContentEnter = slideInHorizontally { height -> -height } + fadeIn(),
-                                    initialContentExit = slideOutHorizontally { height -> height } + fadeOut()
-                                )
-                            }
+                SearchAppBarTitle(
+                    targetState = targetState,
+                    title = title,
+                    query = query,
+                    focusRequester = focusRequester,
+                    onQueryChange = {
+                        query = it
+                    },
+                    onQueryDone = {
+                        if (targetState && query.isNotBlank() && query.isNotEmpty()) {
+                            Toast.makeText(context, "search start", Toast.LENGTH_SHORT).show()
+                            query = ""
                         }
-                    ) {isSearch ->
-                        SearchTextFieldWrapper(
-                            title = "text",
-                            query = text,
-                            isSearch = isSearch,
-                            focusRequester = focusRequester,
-                            onQueryChange = {
-                                text = it
-                            },
-                            onQueryDone = {
-                                if (showTextField && text.isNotBlank() && text.isNotEmpty()) {
-                                            Toast.makeText(context, "search start", Toast.LENGTH_SHORT).show()
-                                            text = ""
-                                        }
-                                        showTextField = showTextField.not()
-                            },
-                            onClose = {
-                                text = ""
-                            }
-                        )
+                        targetState = targetState.not()
+                    },
+                    onClose = {
+                        query = ""
                     }
-                }
+                )
             })
 
     }
@@ -208,7 +194,9 @@ private fun SearchTextFieldWrapper(
                 .background(textFieldBackgroundColor)
         ) {
             SearchTextField(
-                modifier = Modifier.weight(1f).align(CenterVertically),
+                modifier = Modifier
+                    .weight(1f)
+                    .align(CenterVertically),
                 query = query,
                 focusRequester = focusRequester,
                 onQueryChange = onQueryChange,
@@ -226,6 +214,46 @@ private fun SearchTextFieldWrapper(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+private fun SearchAppBarTitle(
+    targetState: Boolean,
+    title: String,
+    query: String,
+    focusRequester: FocusRequester,
+    onQueryChange: (String) -> Unit,
+    onQueryDone: (KeyboardActionScope.() -> Unit)?,
+    onClose: () -> Unit,
+    ) {
+    Row() {
+        AnimatedContent(
+            targetState = targetState,
+            transitionSpec = {
+                if ( targetState > initialState ){
+                    ContentTransform(
+                        targetContentEnter = slideInHorizontally { height -> height } + fadeIn(),
+                        initialContentExit = slideOutHorizontally { height -> -height } + fadeOut()
+                    )
+                } else {
+                    ContentTransform(
+                        targetContentEnter = slideInHorizontally { height -> -height } + fadeIn(),
+                        initialContentExit = slideOutHorizontally { height -> height } + fadeOut()
+                    )
+                }
+            }
+        ) {isSearch ->
+            SearchTextFieldWrapper(
+                title = title,
+                query = query,
+                isSearch = isSearch,
+                focusRequester = focusRequester,
+                onQueryChange = onQueryChange,
+                onQueryDone = onQueryDone,
+                onClose = onClose
+            )
+        }
+    }
+}
 fun Modifier.addFocusCleaner(focusManager: FocusManager, doOnClear: () -> Unit = {}): Modifier {
     return this.pointerInput(Unit) {
         detectTapGestures(onTap = {
