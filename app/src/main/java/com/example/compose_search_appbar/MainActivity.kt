@@ -51,6 +51,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -82,14 +83,41 @@ class MainActivity : ComponentActivity() {
             ComposesearchappbarTheme {
                 // A surface container using the 'background' color from the theme
                 val focusManager = LocalFocusManager.current
-                Scaffold(topBar = { SearchAppBar() }
+                val title = "title of your app"
+                var query by remember { mutableStateOf("") }
+                var targetState by remember { mutableStateOf(false) }
+                val context = LocalContext.current
+                Scaffold(topBar = {
+                    SearchAppBar(
+                        title = title,
+                        query = query,
+                        placeholder = "search anything!",
+                        targetState = targetState,
+                        onSearch = {
+                            if (targetState && query.isNotBlank() && query.isNotEmpty()) {
+                                Toast.makeText(context, "search start", Toast.LENGTH_SHORT).show()
+                                query = ""
+                            }
+                            targetState = targetState.not()
+                        },
+                        onQueryChange = { query = it },
+                        onQueryDone = {
+                            if (targetState && query.isNotBlank() && query.isNotEmpty()) {
+                                Toast.makeText(context, "search start", Toast.LENGTH_SHORT).show()
+                                query = ""
+                            }
+                            targetState = targetState.not()
+                        },
+                        onClose = { query = "" }
+                        )
+                }
                    ) {
                     Column(modifier = Modifier
                         .padding(it)
-                        .addFocusCleaner(focusManager = focusManager)
-                        .background(Color.Cyan)
-                        .height(300.dp)
-                        .fillMaxWidth()) {
+                        .addFocusCleaner(focusManager = focusManager)) {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            Text(text = "Search App Bar")
+                        }
                     }
             }
         }
@@ -97,27 +125,29 @@ class MainActivity : ComponentActivity() {
 }
     @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
     @Composable
-    fun SearchAppBar() {
+    fun SearchAppBar(
+        modifier: Modifier = Modifier,
+        title: String,
+        query: String,
+        placeholder: String,
+        targetState: Boolean,
+        onSearch: () -> Unit,
+        onQueryChange: (String) -> Unit,
+        onQueryDone: (KeyboardActionScope.() -> Unit)?,
+        onClose: () -> Unit,
+        backgroundColor: TopAppBarColors = TopAppBarDefaults.smallTopAppBarColors(),
+        textFieldColor: Color = textFieldBackgroundColor
+    ) {
         val focusManager = LocalFocusManager.current
-        val context = LocalContext.current
         val focusRequester by remember { mutableStateOf(FocusRequester()) }
-        val title = "title of your app"
-        var query by remember { mutableStateOf("") }
-        var targetState by remember { mutableStateOf(false) }
         TopAppBar(
-            modifier = Modifier.addFocusCleaner(focusManager = focusManager),
-            colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Blue),
+            modifier = modifier.addFocusCleaner(focusManager = focusManager),
+            colors = backgroundColor,
             actions = {
-                IconButton(onClick = {
-                    if (targetState && query.isNotBlank() && query.isNotEmpty()) {
-                        Toast.makeText(context, "search start", Toast.LENGTH_SHORT).show()
-                        query = ""
-                    }
-                    targetState = targetState.not()
-                }) {
+                IconButton(onClick = onSearch) {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search Icon",
+                        contentDescription = searchIconContentDescription,
                     )
                 }
             },
@@ -127,19 +157,10 @@ class MainActivity : ComponentActivity() {
                     title = title,
                     query = query,
                     focusRequester = focusRequester,
-                    onQueryChange = {
-                        query = it
-                    },
-                    onQueryDone = {
-                        if (targetState && query.isNotBlank() && query.isNotEmpty()) {
-                            Toast.makeText(context, "search start", Toast.LENGTH_SHORT).show()
-                            query = ""
-                        }
-                        targetState = targetState.not()
-                    },
-                    onClose = {
-                        query = ""
-                    }
+                    onQueryChange = onQueryChange,
+                    onQueryDone = onQueryDone,
+                    onClose = onClose,
+                    textFieldColor = textFieldColor
                 )
             })
 
@@ -148,10 +169,14 @@ class MainActivity : ComponentActivity() {
 const val textFieldWidthWeight = 0.7f
 const val textFieldHeightWeight = 0.05f
 
+const val searchIconContentDescription = "Search Icon"
+const val closeIconContentDescription = "Close Icon"
+
 val textFieldCornerShape = 24.dp
 val textFieldBackgroundColor = Color.LightGray
 
 val textFieldPaddingStart = 10.dp
+
 @Composable
 private fun SearchTextField(
     modifier: Modifier = Modifier,
@@ -180,6 +205,7 @@ private fun SearchTextFieldWrapper(
     onQueryChange: (String) -> Unit,
     onQueryDone: (KeyboardActionScope.() -> Unit)?,
     onClose: () -> Unit,
+    textFieldColor: Color
 ) {
     if (isSearch) {
         Row(
@@ -187,11 +213,11 @@ private fun SearchTextFieldWrapper(
                 .fillMaxWidth(textFieldWidthWeight)
                 .fillMaxHeight(textFieldHeightWeight)
                 .border(
-                    border = BorderStroke(1.dp, textFieldBackgroundColor),
+                    border = BorderStroke(1.dp, textFieldColor),
                     shape = RoundedCornerShape(textFieldCornerShape)
                 )
                 .clip(shape = RoundedCornerShape(textFieldCornerShape))
-                .background(textFieldBackgroundColor)
+                .background(textFieldColor)
         ) {
             SearchTextField(
                 modifier = Modifier
@@ -205,7 +231,7 @@ private fun SearchTextFieldWrapper(
             IconButton(onClick = onClose) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Close Icon",
+                    contentDescription = closeIconContentDescription,
                 )
             }
         }
@@ -224,6 +250,7 @@ private fun SearchAppBarTitle(
     onQueryChange: (String) -> Unit,
     onQueryDone: (KeyboardActionScope.() -> Unit)?,
     onClose: () -> Unit,
+    textFieldColor: Color
     ) {
     Row() {
         AnimatedContent(
@@ -249,7 +276,8 @@ private fun SearchAppBarTitle(
                 focusRequester = focusRequester,
                 onQueryChange = onQueryChange,
                 onQueryDone = onQueryDone,
-                onClose = onClose
+                onClose = onClose,
+                textFieldColor = textFieldColor
             )
         }
     }
