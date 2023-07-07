@@ -109,184 +109,20 @@ class MainActivity : ComponentActivity() {
                             targetState = targetState.not()
                         },
                         onClose = { query = "" }
-                        )
+                    )
                 }
-                   ) {
-                    Column(modifier = Modifier
-                        .padding(it)
-                        .addFocusCleaner(focusManager = focusManager)) {
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(it)
+                            .addFocusCleaner(focusManager = focusManager)
+                    ) {
                         Column(modifier = Modifier.fillMaxSize()) {
                             Text(text = "Search App Bar")
                         }
                     }
-            }
-        }
-    }
-}
-    @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
-    @Composable
-    fun SearchAppBar(
-        modifier: Modifier = Modifier,
-        title: String,
-        query: String,
-        placeholder: String,
-        targetState: Boolean,
-        onSearch: () -> Unit,
-        onQueryChange: (String) -> Unit,
-        onQueryDone: (KeyboardActionScope.() -> Unit)?,
-        onClose: () -> Unit,
-        backgroundColor: TopAppBarColors = TopAppBarDefaults.smallTopAppBarColors(),
-        textFieldColor: Color = textFieldBackgroundColor
-    ) {
-        val focusManager = LocalFocusManager.current
-        val focusRequester by remember { mutableStateOf(FocusRequester()) }
-        TopAppBar(
-            modifier = modifier.addFocusCleaner(focusManager = focusManager),
-            colors = backgroundColor,
-            actions = {
-                IconButton(onClick = onSearch) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = searchIconContentDescription,
-                    )
-                }
-            },
-            title = {
-                SearchAppBarTitle(
-                    targetState = targetState,
-                    title = title,
-                    query = query,
-                    focusRequester = focusRequester,
-                    onQueryChange = onQueryChange,
-                    onQueryDone = onQueryDone,
-                    onClose = onClose,
-                    textFieldColor = textFieldColor
-                )
-            })
-
-    }
-}
-const val textFieldWidthWeight = 0.7f
-const val textFieldHeightWeight = 0.05f
-
-const val searchIconContentDescription = "Search Icon"
-const val closeIconContentDescription = "Close Icon"
-
-val textFieldCornerShape = 24.dp
-val textFieldBackgroundColor = Color.LightGray
-
-val textFieldPaddingStart = 10.dp
-
-@Composable
-private fun SearchTextField(
-    modifier: Modifier = Modifier,
-    focusRequester: FocusRequester,
-    onQueryChange: (String) -> Unit,
-    onQueryDone: (KeyboardActionScope.() -> Unit)?,
-    query: String
-    ) {
-    BasicTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier
-            .padding(start = textFieldPaddingStart)
-            .focusRequester(focusRequester = focusRequester),
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = onQueryDone)
-    )
-}
-@Composable
-private fun SearchTextFieldWrapper(
-    title: String,
-    isSearch: Boolean,
-    query: String,
-    focusRequester: FocusRequester,
-    onQueryChange: (String) -> Unit,
-    onQueryDone: (KeyboardActionScope.() -> Unit)?,
-    onClose: () -> Unit,
-    textFieldColor: Color
-) {
-    if (isSearch) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(textFieldWidthWeight)
-                .fillMaxHeight(textFieldHeightWeight)
-                .border(
-                    border = BorderStroke(1.dp, textFieldColor),
-                    shape = RoundedCornerShape(textFieldCornerShape)
-                )
-                .clip(shape = RoundedCornerShape(textFieldCornerShape))
-                .background(textFieldColor)
-        ) {
-            SearchTextField(
-                modifier = Modifier
-                    .weight(1f)
-                    .align(CenterVertically),
-                query = query,
-                focusRequester = focusRequester,
-                onQueryChange = onQueryChange,
-                onQueryDone = onQueryDone
-            )
-            IconButton(onClick = onClose) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = closeIconContentDescription,
-                )
-            }
-        }
-    } else {
-        Text(text = title)
-    }
-}
-
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-private fun SearchAppBarTitle(
-    targetState: Boolean,
-    title: String,
-    query: String,
-    focusRequester: FocusRequester,
-    onQueryChange: (String) -> Unit,
-    onQueryDone: (KeyboardActionScope.() -> Unit)?,
-    onClose: () -> Unit,
-    textFieldColor: Color
-    ) {
-    Row() {
-        AnimatedContent(
-            targetState = targetState,
-            transitionSpec = {
-                if ( targetState > initialState ){
-                    ContentTransform(
-                        targetContentEnter = slideInHorizontally { height -> height } + fadeIn(),
-                        initialContentExit = slideOutHorizontally { height -> -height } + fadeOut()
-                    )
-                } else {
-                    ContentTransform(
-                        targetContentEnter = slideInHorizontally { height -> -height } + fadeIn(),
-                        initialContentExit = slideOutHorizontally { height -> height } + fadeOut()
-                    )
                 }
             }
-        ) {isSearch ->
-            SearchTextFieldWrapper(
-                title = title,
-                query = query,
-                isSearch = isSearch,
-                focusRequester = focusRequester,
-                onQueryChange = onQueryChange,
-                onQueryDone = onQueryDone,
-                onClose = onClose,
-                textFieldColor = textFieldColor
-            )
         }
-    }
-}
-fun Modifier.addFocusCleaner(focusManager: FocusManager, doOnClear: () -> Unit = {}): Modifier {
-    return this.pointerInput(Unit) {
-        detectTapGestures(onTap = {
-            doOnClear()
-            focusManager.clearFocus()
-        })
     }
 }
